@@ -21,35 +21,17 @@ if [ ! -d "$HOME/.config/lazy-react" ]; then
 fi
 
 # 2. Enable LazyVim extras for React/TypeScript development
-cat <<'EOF' > ~/.config/lazy-react/lazyvim.json
-{
-  "extras": [
-    "lazyvim.plugins.extras.lang.typescript",
-    "lazyvim.plugins.extras.lang.tailwind",
-    "lazyvim.plugins.extras.lang.json",
-    "lazyvim.plugins.extras.lang.markdown",
-    "lazyvim.plugins.extras.linting.eslint",
-    "lazyvim.plugins.extras.formatting.prettier",
-    "lazyvim.plugins.extras.dap.core",
-    "lazyvim.plugins.extras.dap.nlua",
-    "lazyvim.plugins.extras.test.core",
-    "lazyvim.plugins.extras.editor.telescope",
-    "lazyvim.plugins.extras.coding.mini-surround",
-    "lazyvim.plugins.extras.util.mini-hipatterns"
-  ],
-  "news": {
-    "NEWS.md": ""
-  },
-  "version": 7
-}
-EOF
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/setup_lazyvim_plugins.sh"
+REACT_EXTRAS="lazyvim.plugins.extras.lang.typescript,lazyvim.plugins.extras.lang.tailwind,lazyvim.plugins.extras.lang.json,lazyvim.plugins.extras.linting.eslint,lazyvim.plugins.extras.formatting.prettier"
+setup_lazyvim_plugins_for_config "$HOME/.config/lazy-react" "$REACT_EXTRAS"
 
 echo "LazyVim extras enabled for React/TypeScript development."
 
 # 3. Add custom React plugins (emmet, autotag, TSX support)
 mkdir -p ~/.config/lazy-react/lua/plugins
 
-cat <<'EOF' > ~/.config/lazy-react/lua/plugins/react.lua
+cat <<'EOF' >~/.config/lazy-react/lua/plugins/react.lua
 -- React / TypeScript / JSX / TSX enhancements
 return {
   -- Auto close and auto rename HTML/JSX tags
@@ -109,11 +91,12 @@ EOF
 echo "Custom React plugins installed."
 
 # 4. Install colorscheme theme
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 "$SCRIPT_DIR/setup_theme.sh" \
   --config-dir "$HOME/.config/lazy-react" \
   --theme "catppuccin/nvim" \
   --opts '{ flavour = "frappe" }'
+
+"$SCRIPT_DIR/install_plugins.sh" install_opencode_nvim "$HOME/.config/lazy-react"
 
 # 5. Install snacks.nvim with a React-themed banner
 "$SCRIPT_DIR/setup_snacks.sh" \
@@ -133,7 +116,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # 6. Add alias to ~/.zshrc
 if ! grep -q 'alias nvim-react=' ~/.zshrc 2>/dev/null; then
-  echo "alias nvim-react='NVIM_APPNAME=lazy-react nvim'" >> ~/.zshrc
+  echo "alias nvim-react='NVIM_APPNAME=lazy-react nvim'" >>~/.zshrc
   echo "Added alias 'nvim-react' to ~/.zshrc. Use 'nvim-react' to launch LazyVim for React."
 else
   echo "Alias 'nvim-react' already exists in ~/.zshrc."

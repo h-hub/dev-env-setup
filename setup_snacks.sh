@@ -44,16 +44,25 @@ usage() {
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -c|--config-dir)
-      CONFIG_DIR="$2"; shift 2 ;;
-    -b|--banner)
-      BANNER="$2"; shift 2 ;;
-    -B|--banner-file)
-      BANNER_FILE="$2"; shift 2 ;;
-    -h|--help)
-      usage ;;
-    *)
-      echo "Unknown option: $1" >&2; usage ;;
+  -c | --config-dir)
+    CONFIG_DIR="$2"
+    shift 2
+    ;;
+  -b | --banner)
+    BANNER="$2"
+    shift 2
+    ;;
+  -B | --banner-file)
+    BANNER_FILE="$2"
+    shift 2
+    ;;
+  -h | --help)
+    usage
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    usage
+    ;;
   esac
 done
 
@@ -87,7 +96,7 @@ while IFS= read -r line; do
   # Escape any backslashes and double-quotes for Lua strings
   escaped=$(printf '%s' "$line" | sed 's/\\/\\\\/g; s/"/\\"/g')
   lua_banner_lines="${lua_banner_lines}          \"${escaped}\",\n"
-done <<< "$BANNER"
+done <<<"$BANNER"
 
 # ── Write the snacks.nvim plugin spec ────────────────────────────────────────
 SNACKS_FILE="$PLUGINS_DIR/snacks.lua"
@@ -102,7 +111,7 @@ if [[ -f "$SNACKS_FILE" ]]; then
   echo "Replacing existing snacks.lua..."
 fi
 
-cat > "$SNACKS_FILE" <<LUAEOF
+cat >"$SNACKS_FILE" <<LUAEOF
 -- snacks.nvim – A collection of QoL plugins for Neovim
 -- https://github.com/folke/snacks.nvim
 return {
@@ -139,8 +148,18 @@ $(printf "%b" "$lua_banner_lines")        }, "\n"),
     git        = { enabled = true },
     gitbrowse  = { enabled = true },
     lazygit    = { enabled = true },
-    terminal   = { enabled = true },
     toggle     = { enabled = true },
+    terminal = {
+      enabled = true,
+      win = {
+        split = "below",
+        height = 12,
+        focusable = true,
+        wo = {
+              winhighlight = "Normal:NormalSB,FloatBorder:FloatBorder",
+            },
+      }
+    },
   },
   keys = {
     -- Top Pickers & Explorer

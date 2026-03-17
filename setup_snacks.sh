@@ -129,7 +129,7 @@ return {
 $(printf "%b" "$lua_banner_lines")        }, "\n"),
       },
     },
-    indent     = { enabled = true },
+    indent     = { enabled = false }, -- disabled due to race condition causing "Invalid window id" errors
     input      = { enabled = true },
     notifier   = { enabled = true, timeout = 3000 },
     scroll     = { enabled = true },

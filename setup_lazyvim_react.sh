@@ -98,6 +98,68 @@ echo "Custom React plugins installed."
 
 "$SCRIPT_DIR/install_plugins.sh" install_opencode_nvim "$HOME/.config/lazy-react"
 
+echo
+echo "\nDownloading js debug from MS"
+VERSION="1.112.0"
+
+# 2. Define the URL and Filename
+# Note: The 'v' prefix is used in the URL path, but may vary by repo
+FILENAME="js-debug-dap-v${VERSION}.tar.gz"
+URL="https://github.com/microsoft/vscode-js-debug/releases/download/v${VERSION}/${FILENAME}"
+
+# 3. Download to home directory (~)
+echo "Downloading version ${VERSION} to ~..."
+curl -L "$URL" -o ~/"$FILENAME"
+
+# 4. Extract in the home directory
+echo "Extracting..."
+tar -xzf ~/"$FILENAME" -C ~
+
+echo "Done! Files extracted to ~"
+
+echo "Downloading js debug from MS done.\n"
+echo
+
+cat <<'EOF' >~/.config/lazy-react/lua/plugins/dap.lua
+return {
+  "mfussenegger/nvim-dap",
+  optional = true,
+  opts = function(_, opts)
+    local dap = require("dap")
+    local vscode = require("dap.ext.vscode")
+
+    -- 1. Path to your server
+    local js_debug_path = vim.fn.expand("$HOME/js-debug/src/dapDebugServer.js")
+
+    -- 2. Define the 'pwa-node' adapter
+    local pwa_node_adapter = {
+      type = "server",
+      host = "localhost",
+      port = "${port}",
+      executable = {
+        command = "node",
+        args = { js_debug_path, "${port}" },
+      },
+    }
+
+    -- 3. Register BOTH names in the adapters table
+    -- This resolves the "missing adapter" error
+    dap.adapters["pwa-node"] = pwa_node_adapter
+    dap.adapters["node-terminal"] = pwa_node_adapter
+
+    -- 5. Link filetypes
+    local js_filetypes = { "typescript", "javascript", "typescriptreact", "javascriptreact" }
+    for _, type in ipairs({ "node", "pwa-node", "node-terminal" }) do
+      vscode.type_to_filetypes[type] = js_filetypes
+    end
+
+    return opts
+  end,
+}
+EOF
+
+echo "DAP configured with zero-boilerplate aliases."
+
 # 5. Install snacks.nvim with a React-themed banner
 "$SCRIPT_DIR/setup_snacks.sh" \
   --config-dir "$HOME/.config/lazy-react" \
@@ -146,3 +208,33 @@ echo "  • tailwind-sorter   – Auto-sort Tailwind classes on save"
 echo "  • treesitter        – tsx, typescript, javascript, html, css, json parsers"
 echo ""
 echo "Run 'source ~/.zshrc' then 'nvim-react' to launch."
+
+echo -e "\n--- CONFIGURATION INSTRUCTIONS ---"
+echo "Add the following configuration to your VS Code '.vscode/launch.json' file:"
+echo
+
+cat <<EOF
+{
+      "name": "Next.js: Reliable Debug",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "env": {
+        "NODE_OPTIONS": "--inspect"
+      },
+      "cwd": "\${workspaceFolder}",
+      "console": "integratedTerminal",
+      "resolveSourceMapLocations": [
+        "\${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
+      "skipFiles": [
+        "<node_internals>/**",
+        "**/node_modules/**",
+        "**/dist/compiled/**"
+      ]
+}
+EOF
+
+echo -e "\nSetup complete!"

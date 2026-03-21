@@ -59,7 +59,7 @@ EOF
   echo "Successfully updated LazyVim extras in $lazyvim_json_file"
 }
 
-COMMON_LAZYVIM_EXTRAS="lazyvim.plugins.extras.dap.core,lazyvim.plugins.extras.dap.nlua,lazyvim.plugins.extras.editor.telescope,lazyvim.plugins.extras.test.core,lazyvim.plugins.extras.lang.markdown,lazyvim.plugins.extras.ui.smear-cursor"
+COMMON_LAZYVIM_EXTRAS="lazyvim.plugins.extras.dap.core,lazyvim.plugins.extras.dap.nlua,lazyvim.plugins.extras.editor.telescope,lazyvim.plugins.extras.test.core,lazyvim.plugins.extras.lang.markdown,lazyvim.plugins.extras.ui.smear-cursor,lazyvim.plugins.extras.util.rest"
 
 # Accept additional LazyVim plugins and combine with COMMON_LAZYVIM_EXTRAS
 setup_lazyvim_plugins_for_config() {

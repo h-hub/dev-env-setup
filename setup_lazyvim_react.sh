@@ -93,8 +93,8 @@ echo "Custom React plugins installed."
 # 4. Install colorscheme theme
 "$SCRIPT_DIR/setup_theme.sh" \
   --config-dir "$HOME/.config/lazy-react" \
-  --theme "folke/tokyonight.nvim" \
-  --opts '{ style = "moon" }'
+  --theme "ntk148v/habamax.nvim" \
+  --requires "rktjmp/lush.nvim"
 
 "$SCRIPT_DIR/install_plugins.sh" install_opencode_nvim "$HOME/.config/lazy-react"
 

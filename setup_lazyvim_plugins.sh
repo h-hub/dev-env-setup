@@ -1,6 +1,32 @@
 #!/bin/bash
 set -e
 
+# --- New Function to Add Keymaps ---
+add_lazyvim_keymap() {
+  local config_dir="$1"
+  local mode="$2"
+  local lhs="$3"
+  local rhs="$4"
+  local desc="$5"
+  local keymaps_file="$config_dir/lua/config/keymaps.lua"
+
+  mkdir -p "$(dirname "$keymaps_file")"
+
+  # Ensure the file exists
+  [ ! -f "$keymaps_file" ] && touch "$keymaps_file"
+
+  # Construct the lua line
+  local map_line="vim.keymap.set(\"$mode\", \"$lhs\", $rhs, { desc = \"$desc\" })"
+
+  # Append only if the mapping doesn't already exist in the file
+  if ! grep -Fq "$lhs" "$keymaps_file"; then
+    echo "$map_line" >>"$keymaps_file"
+    echo "Added keymap: $lhs -> $desc"
+  else
+    echo "Keymap $lhs already exists, skipping."
+  fi
+}
+
 enable_lazyvim_extras() {
   local config_dir="$1"
   local extras_to_enable="$2"
@@ -8,7 +34,6 @@ enable_lazyvim_extras() {
 
   mkdir -p "$(dirname "$lazyvim_json_file")"
 
-  # Initialize lazyvim.json if it doesn't exist
   if [ ! -f "$lazyvim_json_file" ]; then
     cat <<'EOF' >"$lazyvim_json_file"
 {
@@ -22,18 +47,13 @@ EOF
   fi
 
   if command -v jq >/dev/null 2>&1; then
-    # Use jq to split the string into a JSON array and merge without duplicates
     jq --arg extras "$extras_to_enable" \
       '.extras = ($extras | split(",") | map(select(length > 0)))' \
       "$lazyvim_json_file" >"$lazyvim_json_file.tmp" && mv "$lazyvim_json_file.tmp" "$lazyvim_json_file"
   else
-    # Manual Bash reconstruction (Reliable version)
     IFS=',' read -r -a extras_array <<<"$extras_to_enable"
-
-    # Build the JSON array string: "item1", "item2"
     local json_items=""
     for i in "${!extras_array[@]}"; do
-      # Trim whitespace if any
       item=$(echo "${extras_array[$i]}" | xargs)
       if [ -n "$item" ]; then
         json_items="$json_items\"$item\""
@@ -43,7 +63,6 @@ EOF
       fi
     done
 
-    # Rewrite the file with the new array
     cat <<EOF >"$lazyvim_json_file"
 {
   "extras": [
@@ -61,19 +80,22 @@ EOF
 
 COMMON_LAZYVIM_EXTRAS="lazyvim.plugins.extras.dap.core,lazyvim.plugins.extras.dap.nlua,lazyvim.plugins.extras.editor.telescope,lazyvim.plugins.extras.test.core,lazyvim.plugins.extras.lang.markdown,lazyvim.plugins.extras.ui.smear-cursor,lazyvim.plugins.extras.util.rest"
 
-# Accept additional LazyVim plugins and combine with COMMON_LAZYVIM_EXTRAS
 setup_lazyvim_plugins_for_config() {
   local config_dir="$1"
   local additional_plugins="$2"
   local combined_extras="$COMMON_LAZYVIM_EXTRAS"
+
   if [ -n "$additional_plugins" ]; then
-    # Remove leading/trailing commas and combine
     additional_plugins=$(echo "$additional_plugins" | sed 's/^,*//;s/,*$//')
     if [ -n "$additional_plugins" ]; then
       combined_extras="$combined_extras,$additional_plugins"
     fi
   fi
+
   enable_lazyvim_extras "$config_dir" "$combined_extras"
+
+  # --- Apply the DAP Reset Mapping here ---
+  add_lazyvim_keymap "$config_dir" "n" "<leader>dR" "function() require('dapui').open({ reset = true }) end" "Reset DAP UI Layout"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
